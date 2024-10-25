@@ -1,54 +1,27 @@
-name: Laravel CI/CD
-
+name: Deploy Laravel on EC2
 on:
-  workflow_dispatch:
+  push:
+    branches: 
+      - main
 
 jobs:
-  laravel-tests:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.0'
-
-      - name: Copy .env
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-
-      - name: Install Composer Dependencies
-        run: |
-          composer install --no-interaction --prefer-dist --optimize-autoloader || {
-            echo "Composer installation failed. Checking composer diagnostics:";
-            composer diagnose;
-            exit 1;
-          }
-        env:
-          COMPOSER_PROCESS_TIMEOUT: 2000
-
-      - name: Verify Composer Installation
-        run: |
-          if [ ! -d "vendor" ]; then
-            echo "Error: Vendor directory missing. Composer dependencies were not installed."
-            exit 1
-          fi
-
-      - name: Generate Application Key
-        run: php artisan key:generate
-
-      - name: Set Directory Permissions
-        run: chmod -R 777 storage bootstrap/cache
-
-      - name: Create SQLite Database
-        run: |
-          mkdir -p database
-          touch database/database.sqlite
-
-      - name: Run Tests
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
-        run: php artisan test
+    - name: Execute remote SSH commands
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        key: ${{ secrets.KEY }} # Ensure KEY is your base64 encoded key
+        port: 22 # Adjust the port if necessary
+        script: |
+          cd /var/www/html/laravelapp
+          git config --global --add safe.directory /var/www/html/laravelapp
+          git add .
+          git commit -m "serverside changes" || echo "No changes to commit"
+          git pull origin main
+          php artisan migrate
+          php artisan serve --host=0.0.0.0 --port=8000
