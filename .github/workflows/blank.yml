@@ -24,8 +24,8 @@ jobs:
       - name: Execute Commands on EC2
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}        # Replace with your EC2 instance's public DNS
-          username: ec2-user                # Change if you use a different user (e.g., ubuntu)
+          host: ${{ secrets.HOST }}       # Replace with your EC2 instance's public DNS
+          username: ubuntu                # Change if you use a different user (e.g., ec2-user for Amazon Linux)
           key: ${{ secrets.KEY }}
           script: |
             cd /var/www/html/laravelapp
