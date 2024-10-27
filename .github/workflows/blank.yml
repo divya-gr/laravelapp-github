@@ -1,25 +1,37 @@
-name: Deploy Laravel on EC2
+name: Deploy Laravel to EC2
+
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master  # Adjust the branch as needed
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
 
-    - name: Execute remote SSH commands
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        key: ${{ secrets.KEY }} # Ensure KEY is your base64 encoded key
-        port: 22 # Adjust the port if necessary
-        script: |
-          cd /var/www/html/laravelapp
-          git config --global --add safe.directory /var/www/html/laravelapp
-          git add .
-          git commit -m "serverside changes" || echo "No changes to commit"
-          git pull origin main
-          php artisan migrate
-          php artisan serve --host=0.0.0.0 --port=8000
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH Key
+        env:
+          KEY: ${{ secrets.KEY }}
+          HOST: ${{ secrets.HOST }}  # Replace with your EC2 instance's public DNS
+        run: |
+          echo "$KEY" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+      - name: Execute Commands on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}        # Replace with your EC2 instance's public DNS
+          username: ec2-user                # Change if you use a different user (e.g., ubuntu)
+          key: ${{ secrets.KEY }}
+          script: |
+            cd /var/www/html/laravelapp
+            git config --global --add safe.directory /var/www/html/laravelapp
+            git add .
+            git commit -m "serversidechanges" || echo "No changes to commit"
+            git pull origin main
+            php artisan migrate --force
+            php artisan serve --host=0.0.0.0 --port=8000
