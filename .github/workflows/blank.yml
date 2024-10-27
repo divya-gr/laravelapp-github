@@ -27,6 +27,9 @@ jobs:
           host: ${{ secrets.HOST }}       # Replace with your EC2 instance's public DNS
           username: ubuntu                # Change if you use a different user (e.g., ec2-user for Amazon Linux)
           key: ${{ secrets.KEY }}
+          timeout: 60s                # Increase to 60 seconds
+          proxy_timeout: 60s          # Increase to 60 seconds
+          command_timeout: 15m 
           script: |
             cd /var/www/html/laravelapp
             git config --global --add safe.directory /var/www/html/laravelapp
