@@ -39,4 +39,4 @@ jobs:
             sudo chown -R ubuntu:www-data storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
             php artisan migrate 
-            php artisan serve --host=0.0.0.0 --port=8000
+            nohup php artisan serve --host=0.0.0.0 --port=8000 > artisan_output.log 2>&1 &
